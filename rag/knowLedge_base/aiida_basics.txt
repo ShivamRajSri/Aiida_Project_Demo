@@ -1,0 +1,4 @@
+AiiDA is a Python framework for managing computational workflows.
+Each simulation is stored as a node in a directed acyclic graph (provenance graph).
+Calculations are identified by their primary key (pk).
+WorkChains are AiiDA's way of defining multi-step workflows.

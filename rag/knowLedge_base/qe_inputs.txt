@@ -1,0 +1,4 @@
+Quantum ESPRESSO geometry optimization uses the relax or vc-relax calculation type.
+ecutwfc controls the plane-wave cutoff energy; typical values are 40-80 Ry.
+SCF convergence failures often require increasing ecutwfc, smearing, or k-points.
+The pw.x code handles DFT calculations in Quantum ESPRESSO.
