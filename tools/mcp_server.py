@@ -1,6 +1,6 @@
 from typing import Any, Callable
 
-from tools.mock_aida import (
+from tools.mock_aiida import (
     submit_calculation,
     query_calculations,
     get_calculation_log,
