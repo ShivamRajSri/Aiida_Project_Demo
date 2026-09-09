@@ -1,10 +1,15 @@
 from pathlib import Path
+import re
+
 from llm.model_client import ModelClient
 from rag.retriever import retrieve
 from tools.mcp_server import call_tool
-import re
 
-PROMPT = Path("config/prompts/workflow_agent.txt").read_text()
+
+PROMPT = Path(
+    "config/prompts/workflow_agent.txt"
+).read_text()
+
 
 class WorkflowAgent:
     def __init__(self):
@@ -12,19 +17,50 @@ class WorkflowAgent:
 
     def handle(self, user_input: str) -> str:
         context = retrieve(user_input)
-        full_prompt = PROMPT + f"\n\nRelevant documentation:\n{context}"
 
-        # Submit a mock calculation
-        result = call_tool("submit_calculation",
-                           structure=self._extract_structure(user_input),
-                           parameters={"calculation": "relax", "ecutwfc": 60})
+        # Only submit when the user explicitly asks to submit/run
+        submission_words = [
+            "submit",
+            "execute",
+            "launch",
+            "start the calculation",
+            "run the calculation",
+        ]
 
-        augmented = f"{user_input}\n\n[Tool result: {result}]"
-        return self.llm.chat(full_prompt, augmented)
+        should_submit = any(
+            word in user_input.lower()
+            for word in submission_words
+        )
+
+        if not should_submit:
+            augmented = (
+                f"{user_input}\n\n"
+                f"[Relevant documentation]\n"
+                f"{context}"
+            )
+
+            return self.llm.chat(PROMPT, augmented)
+
+        result = call_tool(
+            "submit_calculation",
+            structure=self._extract_structure(user_input),
+            parameters={
+                "calculation": "relax",
+                "ecutwfc": 60,
+            },
+        )
+
+        augmented = (
+            f"{user_input}\n\n"
+            f"[Relevant documentation]\n{context}\n\n"
+            f"[Tool result]\n{result}"
+        )
+
+        return self.llm.chat(PROMPT, augmented)
 
     def _extract_structure(self, text: str) -> str:
-        # Simple heuristic: look for a known material name
-        for material in ["Si", "GaN", "TiO2", "Fe", "Al"]:
+        for material in ["Si", "GaN", "TiO2"]:
             if material.lower() in text.lower():
                 return material
+
         return "unknown_structure"
